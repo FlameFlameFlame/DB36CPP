@@ -18,22 +18,22 @@ namespace DB36_NS
     {
         private:
             std::string path;
-            uint64_t keySize;
-            uint64_t valueSize;
+            uint64_t keyLength;
+            uint64_t valueLength;
             uint8_t capacity;
-            int64_t recordSize;
-            int64_t capacitySize;
+            uint64_t recordLength;
+            uint64_t capacitySize;
             uint16_t shift;
-            int64_t recordsCount;
+            uint64_t recordsCount;
             bool isShrinked;
-            std::fstream* file;
+            mutable std::fstream file;
         public:
-            int64_t SlotOf(BigInt& key);
-            void ReadAt(const int64_t& address, ByteList& data);
-            void ReadAt(const int64_t& address, ByteVector& data);
+            uint64_t SlotOf(const BigInt& key) const;
+            void ReadAt(const uint64_t& address, ByteList& data);
+            void ReadAt(const uint64_t& address, ByteVector& data);
 
-            void WriteAt(const int64_t& address, const ByteList& data) const;
-            void WriteAt(const int64_t& address, const ByteVector& data) const;
+            void WriteAt(const uint64_t& address, const ByteList& data) const;
+            void WriteAt(const uint64_t& address, const ByteVector& data) const;
 
         private:
             void Set(BigInt& key, const ByteList& value);
@@ -48,6 +48,8 @@ namespace DB36_NS
                 return capacitySize;
             }   
             void Init();
+            void CreateBlobFile();
+
             void Destroy();
             void Close();
     };
