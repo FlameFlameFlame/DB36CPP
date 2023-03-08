@@ -1,6 +1,7 @@
 #include <list>
 #include <cmath>
 #include <string>
+#include <memory>
 #include <fstream>
 
 #include <boost/multiprecision/cpp_int.hpp>
@@ -31,6 +32,8 @@ namespace DB36_NS
             uint64_t SlotOf(const BigInt& key) const;
             void ReadAt(const uint64_t& address, ByteList& data);
             void ReadAt(const uint64_t& address, ByteVector& data);
+
+            std::unique_ptr<Byte[]> ReadBytesFromBlob(const uint64_t& address, const uint64_t& len);
 
             void WriteAt(const uint64_t& address, const ByteList& data) const;
             void WriteAt(const uint64_t& address, const ByteVector& data) const;

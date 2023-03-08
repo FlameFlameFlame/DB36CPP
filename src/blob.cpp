@@ -34,6 +34,17 @@ void Blob::ReadAt(const uint64_t& address, ByteVector& data)
     }
 }
 
+std::unique_ptr<Byte[]> Blob::ReadBytesFromBlob(const uint64_t &address, const uint64_t &len)
+{
+    std::unique_ptr<Byte[]> returnArray = std::make_unique<Byte[]>(len); 
+    file.seekg(address * recordLength, std::ios_base::beg);
+    for (int i = 0; i < len; ++i)
+    {
+        file >> returnArray[i]; 
+    }
+    return returnArray;
+}
+
 void Blob::WriteAt(const uint64_t& address, const ByteList& data) const
 {
     file.seekg(address * recordLength, std::ios_base::beg);
@@ -55,13 +66,11 @@ void Blob::WriteAt(const uint64_t& address, const ByteVector& data) const
 // TODO: Return type?
 void Blob::Set(BigInt& key, const ByteList& value)
 {
-    const uint64_t valueLen = value.size();
-
     ByteVector data(recordLength);
     auto i = SlotOf(key);
     Byte iters;
 
-    if (valueLen > valueLength)
+    if (value.size() > valueLength)
     {
         throw(std::length_error("record value exceeds size"));
     }
@@ -69,7 +78,7 @@ void Blob::Set(BigInt& key, const ByteList& value)
     if (!isShrinked)
     {
         auto valueIt = value.begin();
-        const auto padding = valueLength - valueLen;
+        const auto padding = valueLength - value.size();
         std::copy(value.begin(), value.end(), data.begin() + padding);
         WriteAt(i, data);
         return;
@@ -79,7 +88,7 @@ void Blob::Set(BigInt& key, const ByteList& value)
     boost::multiprecision::export_bits(key, std::back_inserter(keyData), 8);
     const uint64_t keyDataLen = keyData.size();
     std::copy(keyData.begin(), keyData.end(), data.begin() + keyLength - keyDataLen);
-    std::copy(value.begin(), value.end(), data.begin() + recordLength - valueLen);
+    std::copy(value.begin(), value.end(), data.begin() + recordLength - value.size());
 
 
     BigInt recordKey;
@@ -88,8 +97,8 @@ void Blob::Set(BigInt& key, const ByteList& value)
     do 
     {
         ++iters;
-        ReadAt(i, recordKeyData);
-        // setbytes
+        const auto keyBytes = ReadBytesFromBlob(iters, keyLength);
+        memcpy(&recordKey, &keyBytes, keyLength);
         if (key != recordKey || recordKey == 0)
         {
             WriteAt(i, data);
