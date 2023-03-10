@@ -45,6 +45,16 @@ std::unique_ptr<Byte[]> Blob::ReadBytesFromBlob(const uint64_t &address, const u
     return returnArray;
 }
 
+uint64_t Blob::SetBytesToBlob(const uint64_t &address, const Byte* data, const uint64_t &len)
+{
+    file.seekg(address * recordLength, std::ios_base::beg);
+    for (int i = 0; i < len; ++i)
+    {
+        file << data[i]; 
+    }
+    return address + len;
+}
+
 void Blob::WriteAt(const uint64_t& address, const ByteList& data) const
 {
     file.seekg(address * recordLength, std::ios_base::beg);
@@ -117,7 +127,6 @@ ByteList Blob::Get(BigInt& key)
     auto i = SlotOf(key);
     uint8_t iters;
 
-    BigInt recordKey;
     do 
     {
         ++iters;
@@ -126,8 +135,10 @@ ByteList Blob::Get(BigInt& key)
         if (!isShrinked)
             return data;
 
-        // setbytes
-        if (key != recordKey)
+        auto keyBytes = ReadBytesFromBlob(i, keyLength);
+        BigInt recordKey;
+        memcpy(keyBytes.get(), &recordKey, keyLength);
+        if (key == recordKey)
         {
             return data;
         }

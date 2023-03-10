@@ -34,6 +34,8 @@ namespace DB36_NS
             void ReadAt(const uint64_t& address, ByteVector& data);
 
             std::unique_ptr<Byte[]> ReadBytesFromBlob(const uint64_t& address, const uint64_t& len);
+            uint64_t SetBytesToBlob(const uint64_t& address, const Byte* data, const uint64_t& len);
+
 
             void WriteAt(const uint64_t& address, const ByteList& data) const;
             void WriteAt(const uint64_t& address, const ByteVector& data) const;
