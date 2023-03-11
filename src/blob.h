@@ -39,6 +39,21 @@ namespace DB36_NS
             // create file i
             void CreateBlobFile();
         public:
+            // constructor
+            Blob( 
+                const std::string& path,
+                const uint64_t& keyLength,
+                const uint64_t& valueLength,
+                const uint8_t& capacity) :
+                blobPath(path),
+                blobKeyLength(keyLength),
+                blobValueLength(valueLength),
+                blobCapacity(capacity)
+                {
+
+                }
+            // delete default constructor
+            Blob() = delete;
             // write value associated with the key
             void Set(const BigInt& key, const Byte* value, const uint64_t& valueLen);
             // get value associated with the key
