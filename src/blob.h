@@ -12,49 +12,47 @@ namespace DB36_NS
 
     using BigInt = boost::multiprecision::cpp_int;
     using Byte = uint8_t;
-    using ByteList = std::list<Byte>;
-    using ByteVector = std::vector<Byte>;
 
     class Blob 
     {
         private:
             std::string path;
-            uint64_t keyLength;
-            uint64_t valueLength;
-            uint8_t capacity;
-            uint64_t recordLength;
-            uint64_t capacitySize;
-            uint16_t shift;
-            uint64_t recordsCount;
+            uint64_t blobKeyLength;
+            uint64_t blobValueLength;
+            uint8_t blobCapacity;
+            uint64_t blobRecordLength;
+            uint64_t blobCapacitySize;
+            uint16_t shift = 0;
+            uint64_t blobRecordsCount;
+
             bool isShrinked;
             mutable std::fstream file;
-        public:
-            uint64_t SlotOf(const BigInt& key) const;
-            void ReadAt(const uint64_t& address, ByteList& data);
-            void ReadAt(const uint64_t& address, ByteVector& data);
-
-            std::unique_ptr<Byte[]> ReadBytesFromBlob(const uint64_t& address, const uint64_t& len);
-            uint64_t SetBytesToBlob(const uint64_t& address, const Byte* data, const uint64_t& len);
-
-
-            void WriteAt(const uint64_t& address, const ByteList& data) const;
-            void WriteAt(const uint64_t& address, const ByteVector& data) const;
-
         private:
-            void Set(BigInt& key, const ByteList& value);
-            ByteList Get(BigInt& key);
+            uint64_t SlotOf(const BigInt& key) const;
+
+            std::unique_ptr<Byte[]> ReadBytesFromBlob(const uint64_t& address, const uint64_t& len) const;
+            uint64_t WriteBytesToBlob(const uint64_t& address, const Byte* data, const uint64_t& len);
+
+            std::unique_ptr<Byte[]> GetValueFromShrinkedBlob(const BigInt& key) const;
+            std::unique_ptr<Byte[]> GetValueFromUnhrinkedBlob(const BigInt& key) const;
+
+            uint64_t FindKeySlotInShrinkedBlob(const BigInt& key) const;
+            
+            void CreateBlobFile();
+        public:
+            void Set(const BigInt& key, const Byte* data, const uint64_t& len);
+            std::unique_ptr<Byte[]> Get(const BigInt& key) const;
         public:
             int64_t RecordsCount() const
             {
-                return recordsCount;
+                return blobRecordsCount;
             }
             int64_t CapacitySize() const
             {
-                return capacitySize;
+                return blobCapacitySize;
             }   
-            void Init();
-            void CreateBlobFile();
 
+            void Init();
             void Destroy();
             void Close();
     };
