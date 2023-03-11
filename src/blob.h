@@ -52,7 +52,6 @@ namespace DB36_NS
             {
                 return blobCapacitySize;
             }   
-
             void Init();
             void Destroy();
             void Close();
