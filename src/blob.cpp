@@ -22,7 +22,7 @@ std::unique_ptr<Byte[]> Blob::ReadBytesFromBlob(const uint64_t &address, const u
     file.seekg(address, std::ios_base::beg);
     for (int i = 0; i < len; ++i)
     {
-        file >> returnArray[i]; 
+        file >> returnArray.get()[i]; 
     }
     return returnArray;
 }
@@ -59,24 +59,19 @@ void Blob::Set(const BigInt& key, const Byte* value, const uint64_t& valueLen)
     {
         throw(std::length_error("record value exceeds size"));
     }
-
     if (!isShrinked)
     {
         WriteBytesToBlob(SlotOf(key), value, valueLen - blobValueLength);
         return;
     }
-
     // if we're here, then blob is shrinked
     const auto keySlot = FindKeySlotInShrinkedBlob(key);
     const auto address = keySlot * blobRecordLength;
-    {
-        auto keyData = std::make_unique<Byte[]>(blobKeyLength);
-        memcpy(keyData.get(), &key, blobKeyLength);
-        WriteBytesToBlob(keySlot * address, keyData.get(), blobKeyLength);
-    }
-    {
-        WriteBytesToBlob(address + blobKeyLength, value, valueLen);
-    }
+
+    auto keyData = std::make_unique<Byte[]>(blobKeyLength);
+    memcpy(keyData.get(), &key, blobKeyLength);
+    WriteBytesToBlob(address, keyData.get(), blobKeyLength);
+    WriteBytesToBlob(address + blobKeyLength, value, valueLen);
 }
 
 
@@ -106,7 +101,6 @@ void Blob::Init()
         isShrinked = true;
         shift = blobKeyLength * 8 - blobCapacity;
     }
-
     blobCapacitySize = blobRecordLength * blobRecordsCount;
     if (file.is_open())
         throw(std::logic_error("Blob is already initialized"));
@@ -116,14 +110,14 @@ void Blob::Init()
 
 void Blob::CreateBlobFile()
 {
-    const auto fs_path = std::filesystem::path(path);
+    const auto fs_path = std::filesystem::path(blobPath);
     const auto dir = fs_path.root_name().string() + fs_path.root_directory().string() + fs_path.relative_path().string();
 
     std::filesystem::create_directory(dir);
     if (!std::filesystem::exists(dir))
         throw(std::logic_error("Failed to initialize directory"));
 
-    FILE* fileDescriptor = std::fopen(path.c_str(), "w+");
+    FILE* fileDescriptor = std::fopen(blobPath.c_str(), "w+");
     if (!fileDescriptor)
         throw(std::logic_error("Failed to initialize blob"));
     
@@ -131,11 +125,11 @@ void Blob::CreateBlobFile()
 
     std::fclose(fileDescriptor);
 
-    file.open(path, file.in | file.out);
+    file.open(blobPath, file.in | file.out);
     if (!file.is_open())
         throw(std::logic_error("Failed to initialize blob"));
 
-    if (std::filesystem::file_size(path) != blobCapacitySize)
+    if (std::filesystem::file_size(blobPath) != blobCapacitySize)
         throw(std::logic_error("Wrong size"));
 
 }
@@ -144,9 +138,7 @@ void Blob::Destroy()
 {
     if (file.is_open())
         throw(std::logic_error("Tried to destroy opened file"));
-
-    std::filesystem::remove(path);
-
+    std::filesystem::remove(blobPath);
 }
 void Blob::Close()
 {
