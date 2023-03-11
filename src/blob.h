@@ -32,12 +32,9 @@ namespace DB36_NS
 
             std::unique_ptr<Byte[]> ReadBytesFromBlob(const uint64_t& address, const uint64_t& len) const;
             uint64_t WriteBytesToBlob(const uint64_t& address, const Byte* data, const uint64_t& len);
-
-            std::unique_ptr<Byte[]> GetValueFromShrinkedBlob(const BigInt& key) const;
-            std::unique_ptr<Byte[]> GetValueFromUnhrinkedBlob(const BigInt& key) const;
-
-            uint64_t FindKeySlotInShrinkedBlob(const BigInt& key) const;
             
+            uint64_t FindKeySlotInShrinkedBlob(const BigInt& key) const;
+
             void CreateBlobFile();
         public:
             void Set(const BigInt& key, const Byte* data, const uint64_t& len);

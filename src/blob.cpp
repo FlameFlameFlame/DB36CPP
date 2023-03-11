@@ -37,16 +37,6 @@ uint64_t Blob::WriteBytesToBlob(const uint64_t &address, const Byte* data, const
     return address + len;
 }
 
-std::unique_ptr<Byte[]> Blob::GetValueFromShrinkedBlob(const BigInt &key) const
-{
-    return std::unique_ptr<Byte[]>();
-}
-
-std::unique_ptr<Byte[]> Blob::GetValueFromUnhrinkedBlob(const BigInt &key) const
-{
-    return std::unique_ptr<Byte[]>();
-}
-
 uint64_t Blob::FindKeySlotInShrinkedBlob(const BigInt &key) const
 {
     const auto keySlot = SlotOf(key);
