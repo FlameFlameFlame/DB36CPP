@@ -19,7 +19,7 @@ uint64_t Blob::SlotOf(const BigInt& key) const
 std::unique_ptr<Byte[]> Blob::ReadBytesFromBlob(const uint64_t &address, const uint64_t &len) const
 {
     std::unique_ptr<Byte[]> returnArray = std::make_unique<Byte[]>(len); 
-    file.seekg(address * blobRecordLength, std::ios_base::beg);
+    file.seekg(address, std::ios_base::beg);
     for (int i = 0; i < len; ++i)
     {
         file >> returnArray[i]; 
@@ -29,7 +29,7 @@ std::unique_ptr<Byte[]> Blob::ReadBytesFromBlob(const uint64_t &address, const u
 
 uint64_t Blob::WriteBytesToBlob(const uint64_t &address, const Byte* data, const uint64_t &len)
 {
-    file.seekg(address * blobRecordLength, std::ios_base::beg);
+    file.seekg(address, std::ios_base::beg);
     for (int i = 0; i < len; ++i)
     {
         file << data[i]; 
