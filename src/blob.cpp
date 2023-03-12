@@ -88,18 +88,22 @@ std::unique_ptr<Byte[]> Blob::Get(const BigInt& key) const
 
 void Blob::Init()
 {
+    if (blobKeyLength * 8 > blobCapacity)
+    {
+        shift = blobKeyLength * 8 - blobCapacity;
+
+    }
     if (blobCapacity == 0)
     {
-        blobRecordsCount = pow(blobKeyLength * 8, 2.0);
+        blobRecordsCount = pow(2, blobKeyLength * 8);
         blobRecordLength = blobValueLength;
         isShrinked = false;
     }
     else
     {
-        blobRecordsCount = pow(blobCapacity, 2.0);
+        blobRecordsCount = pow(2, blobCapacity);
         blobRecordLength = blobKeyLength + blobValueLength;
         isShrinked = true;
-        shift = blobKeyLength * 8 - blobCapacity;
     }
     blobCapacitySize = blobRecordLength * blobRecordsCount;
     if (file.is_open())
