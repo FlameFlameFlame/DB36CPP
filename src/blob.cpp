@@ -105,26 +105,26 @@ void Blob::Init()
     if (file.is_open())
         throw(std::logic_error("Blob is already initialized"));
 
-    CreateBlobFile();
+   CreateBlobFile();
 }
 
 void Blob::CreateBlobFile()
 {
-    const auto fs_path = std::filesystem::path(blobPath);
-    const auto dir = fs_path.root_name().string() + fs_path.root_directory().string() + fs_path.relative_path().string();
+    const auto fsPath = std::filesystem::path(blobPath);
+    const auto dir = fsPath.parent_path().string();
 
     std::filesystem::create_directory(dir);
     if (!std::filesystem::exists(dir))
         throw(std::logic_error("Failed to initialize directory"));
 
+    // open in C-style to call posix_fallocate
     FILE* fileDescriptor = std::fopen(blobPath.c_str(), "w+");
     if (!fileDescriptor)
         throw(std::logic_error("Failed to initialize blob"));
-    
     posix_fallocate(fileno(fileDescriptor), 0, blobCapacitySize);
-
     std::fclose(fileDescriptor);
 
+    // now open in C++ style
     file.open(blobPath, file.in | file.out);
     if (!file.is_open())
         throw(std::logic_error("Failed to initialize blob"));

@@ -5,7 +5,7 @@
 #include <fstream>
 
 #include <boost/multiprecision/cpp_int.hpp>
-
+#include <gtest/gtest_prod.h>
 
 namespace DB36_NS
 {
@@ -16,7 +16,7 @@ namespace DB36_NS
     class Blob 
     {
         private:
-            std::string blobPath;           // absolue path to the blob file
+            const std::string blobPath;           // absolue path to the blob file
             uint64_t blobKeyLength;         // length of key in bytes
             uint64_t blobValueLength;       // length of value in bytes
             uint8_t blobCapacity;           // capacity is a special parameter: pow (2, capacity) = blobCapacitySize
@@ -25,9 +25,9 @@ namespace DB36_NS
             uint16_t shift = 0;             // shift used in key compression algorythm is blob is shrinked
             uint64_t blobRecordsCount;      // number of records is blob
 
-            bool isShrinked;
+            bool isShrinked = false;
             mutable std::fstream file;
-        private:
+        protected:
             // calculate slot for the shrinked blob
             uint64_t SlotOf(const BigInt& key) const;
             // find slot for the key in shrinked blob
@@ -52,8 +52,8 @@ namespace DB36_NS
                 {
 
                 }
-            // delete default constructor
-            Blob() = delete;
+            Blob() = default;
+            ~Blob() = default;
             // write value associated with the key
             void Set(const BigInt& key, const Byte* value, const uint64_t& valueLen);
             // get value associated with the key
@@ -70,5 +70,9 @@ namespace DB36_NS
             void Init();
             void Destroy();
             void Close();
+
+        private:
+            FRIEND_TEST(BlobTest, SlotOfTest);
+            FRIEND_TEST(BlobTest, AutoCapacityTest);
     };
 }

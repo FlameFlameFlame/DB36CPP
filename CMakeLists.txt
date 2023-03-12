@@ -23,10 +23,23 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(Boost_CONFIG)
 
+FetchContent_Declare(
+    googletest
+    GIT_REPOSITORY https://github.com/google/googletest.git
+    GIT_TAG main
+)
+FetchContent_GetProperties(googletest)
+if(NOT googletest_POPULATED)
+  FetchContent_Populate(googletest)
+  add_subdirectory(${googletest_SOURCE_DIR} ${googletest_BINARY_DIR})
+endif()
+add_library(GTest::GTest INTERFACE IMPORTED)
+target_link_libraries(GTest::GTest INTERFACE gtest_main)
+
 enable_testing()
 
 add_library(DB36CPP src/blob.cpp)
-target_link_libraries(DB36CPP PRIVATE Boost::config Boost::multiprecision) 
+target_link_libraries(DB36CPP PRIVATE Boost::config Boost::multiprecision GTest::GTest) 
 
 add_subdirectory(src/tests)
 
