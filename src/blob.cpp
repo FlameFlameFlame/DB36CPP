@@ -11,9 +11,21 @@
 namespace DB36_NS
 {
 
-uint64_t Blob::SlotOf(const BigInt& key) const
+uint64_t Blob::SlotOf(const Byte* key) const
 {
-    return static_cast<uint64_t>(key>>shift);
+    uint64_t retVal = 0;
+    if (blobKeyLength > sizeof(uint64_t))
+    {
+        // copy last sizeof(uint64_t) bytes for key that is longer than uint64_t
+        memcpy(&retVal, key + (blobKeyLength - sizeof(uint64_t)), sizeof(uint64_t)); 
+        return retVal;
+    }
+    else 
+    {
+        // fill the last blobKeyLength bytes in uint64_t if key is shorter that uint64_t
+        memcpy(&retVal + (sizeof(uint64_t) - blobKeyLength), key, blobKeyLength);
+        return retVal;
+    }
 }
 
 std::unique_ptr<Byte[]> Blob::ReadBytesFromBlob(const uint64_t &address, const uint64_t &len) const
@@ -37,23 +49,24 @@ uint64_t Blob::WriteBytesToBlob(const uint64_t &address, const Byte* data, const
     return address + len;
 }
 
-uint64_t Blob::FindKeySlotInShrinkedBlob(const BigInt &key) const
+uint64_t Blob::FindKeySlotInShrinkedBlob(const Byte* key) const
 {
     const auto keySlot = SlotOf(key);
     const auto address = keySlot * blobRecordLength;
     uint64_t iter = 0;
-    BigInt iterKey;
+    auto iterKey = std::make_unique<Byte[]>(blobKeyLength);
     do 
     {
-        memcpy (&iterKey, ReadBytesFromBlob(address + blobRecordLength, blobKeyLength).get(), blobKeyLength);
+        // read key in iterKey
+        memcpy (iterKey.get(), ReadBytesFromBlob(address + blobRecordLength, blobKeyLength).get(), blobKeyLength);
         if (iter + keySlot > blobCapacity)
             throw std::logic_error("record not found");
-    } while (iterKey != key);
+    } while (!CompareByteKeys(iterKey.get(), key));
     return keySlot + iter;
 }
 
 // TODO: Return type?
-void Blob::Set(const BigInt& key, const Byte* value, const uint64_t& valueLen)
+void Blob::Set(const Byte* key, const Byte* value, const uint64_t& valueLen)
 {
     if (valueLen > blobValueLength)
     {
@@ -67,16 +80,13 @@ void Blob::Set(const BigInt& key, const Byte* value, const uint64_t& valueLen)
     // if we're here, then blob is shrinked
     const auto keySlot = FindKeySlotInShrinkedBlob(key);
     const auto address = keySlot * blobRecordLength;
-
-    auto keyData = std::make_unique<Byte[]>(blobKeyLength);
-    memcpy(keyData.get(), &key, blobKeyLength);
-    WriteBytesToBlob(address, keyData.get(), blobKeyLength);
+    WriteBytesToBlob(address, key, blobKeyLength);
     WriteBytesToBlob(address + blobKeyLength, value, valueLen);
 }
 
 
 // TODO: return type
-std::unique_ptr<Byte[]> Blob::Get(const BigInt& key) const
+std::unique_ptr<Byte[]> Blob::Get(const Byte* key) const
 {
     if (!isShrinked)
         return ReadBytesFromBlob(SlotOf(key), blobValueLength);
@@ -147,5 +157,27 @@ void Blob::Destroy()
 void Blob::Close()
 {
     file.close();
+}
+
+uint64_t Blob::ConvertByteKeyToUintKey(const Byte* key) const
+{
+    uint64_t tempKey = 0;
+    memcpy(&tempKey, key, blobKeyLength < sizeof(uint64_t) ? blobKeyLength : sizeof(uint64_t));
+    return tempKey;
+}
+
+std::unique_ptr<Byte[]> Blob::ConvertUintKeyToByteKey(const uint64_t &key) const
+{
+    return std::unique_ptr<Byte[]>();
+}
+
+bool Blob::CompareByteKeys(const Byte *key1, const Byte *key2) const
+{
+    for (int i = 0; i < blobKeyLength; ++i)
+    {
+        if (key1[i] != key2[i])
+            return false;
+    }
+    return true;
 }
 }

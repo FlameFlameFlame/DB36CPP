@@ -16,7 +16,7 @@ namespace DB36_NS
     class Blob 
     {
         private:
-            const std::string blobPath;           // absolue path to the blob file
+            const std::string blobPath;     // absolue path to the blob file
             uint64_t blobKeyLength;         // length of key in bytes
             uint64_t blobValueLength;       // length of value in bytes
             uint8_t blobCapacity;           // capacity is a special parameter: pow (2, capacity) = blobCapacitySize
@@ -29,15 +29,22 @@ namespace DB36_NS
             mutable std::fstream file;
         protected:
             // calculate slot for the shrinked blob
-            uint64_t SlotOf(const BigInt& key) const;
+            uint64_t SlotOf(const Byte* key) const;
+            uint64_t SlotOf(const uint64_t& key) const;
             // find slot for the key in shrinked blob
-            uint64_t FindKeySlotInShrinkedBlob(const BigInt& key) const;
+            uint64_t FindKeySlotInShrinkedBlob(const Byte* key) const;
             // read bytes in Byte array from the address, adress is in bytes
             std::unique_ptr<Byte[]> ReadBytesFromBlob(const uint64_t& address, const uint64_t& len) const;
             // write bytes from the Byte array to the address, adress is in bytes
             uint64_t WriteBytesToBlob(const uint64_t& address, const Byte* data, const uint64_t& len);
             // create file i
             void CreateBlobFile();
+            // convert convert key in byte form to key in uint64 form
+            uint64_t ConvertByteKeyToUintKey(const Byte* key) const;
+
+            std::unique_ptr<Byte[]> ConvertUintKeyToByteKey(const uint64_t& key) const;
+
+            bool CompareByteKeys(const Byte* key1, const Byte* key2) const;
         public:
             // constructor
             Blob( 
@@ -55,9 +62,9 @@ namespace DB36_NS
             Blob() = default;
             ~Blob() = default;
             // write value associated with the key
-            void Set(const BigInt& key, const Byte* value, const uint64_t& valueLen);
+            void Set(const Byte* key, const Byte* value, const uint64_t& valueLen);
             // get value associated with the key
-            std::unique_ptr<Byte[]> Get(const BigInt& key) const;
+            std::unique_ptr<Byte[]> Get(const Byte* key) const;
         public:
             int64_t RecordsCount() const
             {
@@ -74,5 +81,6 @@ namespace DB36_NS
         private:
             FRIEND_TEST(BlobTest, SlotOfTest);
             FRIEND_TEST(BlobTest, AutoCapacityTest);
+            FRIEND_TEST(BlobTest, ReadWriteTest);
     };
 }
