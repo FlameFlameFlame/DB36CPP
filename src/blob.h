@@ -35,7 +35,7 @@ namespace DB36_NS
             // read bytes in Byte array from the address, adress is in bytes
             std::unique_ptr<Byte[]> ReadBytesFromBlob(const uint64_t& address, const uint64_t& len) const;
             // write bytes from the Byte array to the address, adress is in bytes
-            uint64_t WriteBytesToBlob(const uint64_t& address, const Byte* data, const uint64_t& len);
+            uint64_t WriteBytesToBlob(const uint64_t& address, Byte* data, const uint64_t& len);
             // create file i
             void CreateBlobFile();
             // convert convert key in byte form to key in uint64 form
@@ -59,7 +59,7 @@ namespace DB36_NS
             Blob() = default;
             ~Blob() = default;
             // write value associated with the key
-            void Set(const Byte* key, const Byte* value, const uint64_t& valueLen);
+            void Set(Byte* key, Byte* value, const uint64_t& valueLen);
             // get value associated with the key
             std::unique_ptr<Byte[]> Get(const Byte* key) const;
         public:

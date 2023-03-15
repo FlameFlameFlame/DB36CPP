@@ -36,13 +36,10 @@ std::unique_ptr<Byte[]> Blob::ReadBytesFromBlob(const uint64_t &address, const u
     return returnArray;
 }
 
-uint64_t Blob::WriteBytesToBlob(const uint64_t &address, const Byte* data, const uint64_t &len)
+uint64_t Blob::WriteBytesToBlob(const uint64_t &address, Byte* data, const uint64_t &len)
 {
     file.seekg(address, std::ios_base::beg);
-    for (uint64_t i = 0; i < len; ++i)
-    {
-        file << data[i]; 
-    }
+    file.write(reinterpret_cast<char*>(data), len);
     return address + len;
 }
 
@@ -50,13 +47,13 @@ uint64_t Blob::GetKeyAddressInShrinkedBlob(const Byte* key) const
 {
     const auto startAddress = GetKeyAddress(key);
     uint64_t iter = 0;
-    auto iterKey = std::make_unique<Byte[]>(blobKeyLength);
-    while (!CompareByteKeys(iterKey.get(), ReadBytesFromBlob(startAddress + iter * blobRecordLength, blobKeyLength).get()))
+    while (!CompareByteKeys(key, ReadBytesFromBlob(startAddress + iter * blobRecordLength, blobKeyLength).get()))
     {
-        if (startAddress + ++iter * blobRecordLength > blobCapacitySize)
+        ++iter;
+        if (startAddress + iter * blobRecordLength > blobCapacitySize)
             throw std::logic_error("record not found");
     }
-    return startAddress + (iter - 1) * blobRecordLength;
+    return startAddress + iter * blobRecordLength;
 }
 
 uint64_t Blob::SetKeyAddressInShrinkedBlob(const Byte *key) const
@@ -77,7 +74,7 @@ uint64_t Blob::SetKeyAddressInShrinkedBlob(const Byte *key) const
 }
 
 // TODO: Return type?
-void Blob::Set(const Byte* key, const Byte* value, const uint64_t& valueLen)
+void Blob::Set(Byte* key, Byte* value, const uint64_t& valueLen)
 {
     if (valueLen > blobValueLength)
     {
