@@ -71,7 +71,15 @@ namespace DB36_NS
             int64_t CapacitySize() const
             {
                 return blobCapacitySize;
-            }   
+            }
+            int64_t KeyLength() const 
+            {
+                return blobKeyLength;
+            }
+            int64_t ValueLength() const 
+            {
+                return blobValueLength;
+            }
             void Init();
             void Destroy();
             void Close();
