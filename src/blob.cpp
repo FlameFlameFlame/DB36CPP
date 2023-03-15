@@ -62,7 +62,7 @@ uint64_t Blob::GetKeyAddressInShrinkedBlob(const Byte* key) const
         if (startAddress + iter * blobRecordLength > blobCapacitySize)
             throw std::logic_error("record not found");
     } while (!CompareByteKeys(iterKey.get(), key));
-    return startAddress + iter * blobRecordsCount;
+    return startAddress + (iter - 1) * blobRecordLength;
 }
 
 // TODO: Return type?
