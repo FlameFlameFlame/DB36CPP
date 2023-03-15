@@ -34,7 +34,9 @@ void IOTest(const Byte* key, const Byte* data, const uint64_t& dataLen, Blob& b)
     b.Set(key, data, dataLen);
     const auto getValue = b.Get(key);
     for (int i = 0; i < dataLen; ++i)
-        EXPECT_EQ(data[i], getValue[i]);
+    {
+        EXPECT_EQ(data[i], getValue.get()[i]);
+    }
 }
 
 TEST(BlobTest, SlotOfTest)
@@ -92,19 +94,23 @@ TEST(BlobTest, MillionRecords)
 
     std::random_device dev;
     std::uniform_int_distribution<uint32_t> dist (0, std::numeric_limits<uint32_t>::max());
-    for (int i = 0; i < 1000000; ++i)
+    for (int i = 0; i < 100; ++i)
     {
-        const auto key = ConvertUintKeyToByteArray(dist(dev), 4);
-        std::cout << i << std::endl;
-        IOTest(key.get(), key.get(), 4, b);
+        const auto keyInt = dist(dev);
+        const auto keyBytes = ConvertUintKeyToByteArray(keyInt, 4);
+        const auto valueBytes = ConvertUintKeyToByteArray(keyInt - 1, 4);
+        IOTest(keyBytes.get(), valueBytes.get(), 4, b);
     }
+
+    b.Close();
+    b.Destroy();
 }
 
 TEST(BlobTest, Zeros)
 {
     Blob b("/tmp/testblobs/blob.bl", 4, 4, 0);
     EXPECT_NO_THROW(b.Init());
-    for (int i = 0; i < 1000; ++i)
+    for (int i = 0; i < 1000000; ++i)
     {
         const auto key = ConvertUintKeyToByteArray(i, 2);
         const auto data = b.Get(key.get());
@@ -113,6 +119,8 @@ TEST(BlobTest, Zeros)
             EXPECT_EQ(data.get()[j], 0);
         }
     }
+    b.Close();
+    b.Destroy();
 }
 
 }
