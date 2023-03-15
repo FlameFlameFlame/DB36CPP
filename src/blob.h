@@ -26,10 +26,12 @@ namespace DB36_NS
             bool isShrinked = false;
             mutable std::fstream file;
         protected:
-            // calculate slot for the shrinked blob
+            // calculate address for the shrinked blob
             uint64_t GetKeyAddress(const Byte* key) const;
-            // find slot for the key in shrinked blob
+            // find address for the key in shrinked blob
             uint64_t GetKeyAddressInShrinkedBlob(const Byte* key) const;
+            // find address for the key in shrinked blob
+            uint64_t SetKeyAddressInShrinkedBlob(const Byte* key) const;
             // read bytes in Byte array from the address, adress is in bytes
             std::unique_ptr<Byte[]> ReadBytesFromBlob(const uint64_t& address, const uint64_t& len) const;
             // write bytes from the Byte array to the address, adress is in bytes

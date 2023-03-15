@@ -32,7 +32,7 @@ std::unique_ptr<Byte[]> Blob::ReadBytesFromBlob(const uint64_t &address, const u
 {
     std::unique_ptr<Byte[]> returnArray = std::make_unique<Byte[]>(len); 
     file.seekg(address, std::ios_base::beg);
-    for (int i = 0; i < len; ++i)
+    for (uint64_t i = 0; i < len; ++i)
     {
         file >> returnArray.get()[i]; 
     }
@@ -42,7 +42,7 @@ std::unique_ptr<Byte[]> Blob::ReadBytesFromBlob(const uint64_t &address, const u
 uint64_t Blob::WriteBytesToBlob(const uint64_t &address, const Byte* data, const uint64_t &len)
 {
     file.seekg(address, std::ios_base::beg);
-    for (int i = 0; i < len; ++i)
+    for (uint64_t i = 0; i < len; ++i)
     {
         file << data[i]; 
     }
@@ -65,6 +65,23 @@ uint64_t Blob::GetKeyAddressInShrinkedBlob(const Byte* key) const
     return startAddress + (iter - 1) * blobRecordLength;
 }
 
+uint64_t Blob::SetKeyAddressInShrinkedBlob(const Byte *key) const
+{
+    const auto startAddress = GetKeyAddress(key);
+    uint64_t iter = 0;
+    auto iterKey = std::make_unique<Byte[]>(blobKeyLength);
+    const std::unique_ptr<Byte[]> zeros (new Byte[blobKeyLength]{});
+    do
+    {
+        std::memcpy (iterKey.get(), ReadBytesFromBlob(startAddress + iter * blobRecordLength, blobKeyLength).get(), blobKeyLength);
+        ++iter;
+        if (startAddress + iter * blobRecordLength > blobCapacitySize)
+            throw std::logic_error("couldn't set address in shrinked blob");
+        
+    } while (!(CompareByteKeys(key, iterKey.get()) || CompareByteKeys(iterKey.get(), zeros.get())));
+    return startAddress + (iter - 1) * blobRecordLength;
+}
+
 // TODO: Return type?
 void Blob::Set(const Byte* key, const Byte* value, const uint64_t& valueLen)
 {
@@ -78,7 +95,7 @@ void Blob::Set(const Byte* key, const Byte* value, const uint64_t& valueLen)
         return;
     }
     // if we're here, then blob is shrinked
-    const auto address = GetKeyAddress(key);
+    const auto address = SetKeyAddressInShrinkedBlob(key);
     WriteBytesToBlob(address, key, blobKeyLength);
     WriteBytesToBlob(address + blobKeyLength, value, valueLen);
 }
