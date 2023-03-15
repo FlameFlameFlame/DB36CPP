@@ -94,7 +94,7 @@ TEST(BlobTest, MillionRecords)
 
     std::random_device dev;
     std::uniform_int_distribution<uint32_t> dist (0, std::numeric_limits<uint32_t>::max());
-    for (int i = 0; i < 100; ++i)
+    for (int i = 0; i < 1000000; ++i)
     {
         const auto keyInt = dist(dev);
         const auto keyBytes = ConvertUintKeyToByteArray(keyInt, 4);
@@ -110,7 +110,7 @@ TEST(BlobTest, Zeros)
 {
     Blob b("/tmp/testblobs/blob.bl", 4, 4, 0);
     EXPECT_NO_THROW(b.Init());
-    for (int i = 0; i < 1000000; ++i)
+    for (int i = 0; i < 100; ++i)
     {
         const auto key = ConvertUintKeyToByteArray(i, 2);
         const auto data = b.Get(key.get());
@@ -122,7 +122,6 @@ TEST(BlobTest, Zeros)
     b.Close();
     b.Destroy();
 }
-
 }
 
 int main()
