@@ -95,9 +95,24 @@ TEST(BlobTest, MillionRecords)
     for (int i = 0; i < 1000000; ++i)
     {
         const auto key = ConvertUintKeyToByteArray(dist(dev), 4);
+        std::cout << i << std::endl;
         IOTest(key.get(), key.get(), 4, b);
     }
+}
 
+TEST(BlobTest, Zeros)
+{
+    Blob b("/tmp/testblobs/blob.bl", 4, 4, 0);
+    EXPECT_NO_THROW(b.Init());
+    for (int i = 0; i < 1000; ++i)
+    {
+        const auto key = ConvertUintKeyToByteArray(i, 2);
+        const auto data = b.Get(key.get());
+        for (int j = 0; j < 4; ++j)
+        {
+            EXPECT_EQ(data.get()[j], 0);
+        }
+    }
 }
 
 }
