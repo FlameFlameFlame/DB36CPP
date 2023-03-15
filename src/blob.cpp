@@ -73,7 +73,7 @@ void Blob::Set(const Byte* key, const Byte* value, const uint64_t& valueLen)
     }
     if (!isShrinked)
     {
-        WriteBytesToBlob(SlotOf(key), value, valueLen - blobValueLength);
+        WriteBytesToBlob(SlotOf(key), value, valueLen);
         return;
     }
     // if we're here, then blob is shrinked
