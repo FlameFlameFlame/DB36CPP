@@ -32,10 +32,7 @@ std::unique_ptr<Byte[]> Blob::ReadBytesFromBlob(const uint64_t &address, const u
 {
     std::unique_ptr<Byte[]> returnArray = std::make_unique<Byte[]>(len); 
     file.seekg(address, std::ios_base::beg);
-    for (uint64_t i = 0; i < len; ++i)
-    {
-        file >> returnArray.get()[i]; 
-    }
+    file.read(reinterpret_cast<char*>(returnArray.get()), len);
     return returnArray;
 }
 
@@ -54,14 +51,11 @@ uint64_t Blob::GetKeyAddressInShrinkedBlob(const Byte* key) const
     const auto startAddress = GetKeyAddress(key);
     uint64_t iter = 0;
     auto iterKey = std::make_unique<Byte[]>(blobKeyLength);
-    do 
+    while (!CompareByteKeys(iterKey.get(), ReadBytesFromBlob(startAddress + iter * blobRecordLength, blobKeyLength).get()))
     {
-        // read key in iterKey
-        std::memcpy (iterKey.get(), ReadBytesFromBlob(startAddress + iter * blobRecordLength, blobKeyLength).get(), blobKeyLength);
-        ++iter;
-        if (startAddress + iter * blobRecordLength > blobCapacitySize)
+        if (startAddress + ++iter * blobRecordLength > blobCapacitySize)
             throw std::logic_error("record not found");
-    } while (!CompareByteKeys(iterKey.get(), key));
+    }
     return startAddress + (iter - 1) * blobRecordLength;
 }
 
@@ -155,7 +149,7 @@ void Blob::CreateBlobFile()
     std::fclose(fileDescriptor);
 
     // now open in C++ style
-    file.open(blobPath, file.in | file.out);
+    file.open(blobPath, file.in | file.out | file.binary);
     if (!file.is_open())
         throw(std::logic_error("Failed to initialize blob"));
 
