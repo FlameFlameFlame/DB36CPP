@@ -1,40 +1,49 @@
-#include <gtest/gtest.h>
-
 #include "../blob.h"
 
-// class BlobTest : public ::testing::Test
-// {
-//     public:
-//         BlobTest() = default;
-//     protected:
-//         uint64_t SlotOf(const DB36_NS::BigInt& key)
-//         {
-//             return b.SlotOf(key);
-//         }
-//     private:
-//         DB36_NS::Blob b;
-// };
+#include <gtest/gtest.h>
+
+#include <limits>
 
 namespace DB36_NS
 {
+
+std::unique_ptr<Byte[]> ConvertUintToByteArray(const uint64_t& key, const unsigned int& keyLength)
+{
+    auto retVal = std::make_unique<Byte[]>(keyLength);
+    const uint64_t zero = 0;
+    // fill array with zeros
+    memcpy(retVal.get(), &zero, keyLength);
+    if (sizeof(uint64_t) > keyLength)
+    {
+        memcpy(retVal.get(), &key, keyLength);
+        return retVal;
+    }
+    else
+    {
+        // we'll lose some data here TBH
+        memcpy(retVal.get(), &key, sizeof(uint64_t));
+        return retVal;
+
+    }
+}
 
 TEST(BlobTest, SlotOfTest)
 {
     Blob b("/tmp/testblobs/blob.bl", 4, 3, 10);
     b.Init();
-    EXPECT_EQ(b.SlotOf(0), 0);
-    EXPECT_EQ(b.SlotOf(4194304), 1);
-    EXPECT_EQ(b.SlotOf(8388608), 2);
-    EXPECT_EQ(b.SlotOf(16777216), 4);
-    EXPECT_EQ(b.SlotOf(33554432), 8);
-    EXPECT_EQ(b.SlotOf(67108864), 16);
-    EXPECT_EQ(b.SlotOf(134217728), 32);
-    EXPECT_EQ(b.SlotOf(268435456), 64);
-    EXPECT_EQ(b.SlotOf(536870912), 128);
-    EXPECT_EQ(b.SlotOf(1073741824), 256);
-    EXPECT_EQ(b.SlotOf(2147483648), 512);
-    EXPECT_EQ(b.SlotOf(2151677952), 513);
-    EXPECT_EQ(b.SlotOf(4294967296), 1024);
+    EXPECT_EQ(b.SlotOf(ConvertUintToByteArray(0, 4).get()), 0);
+    EXPECT_EQ(b.SlotOf(ConvertUintToByteArray(4194304, 4).get()), 1);
+    EXPECT_EQ(b.SlotOf(ConvertUintToByteArray(8388608, 4).get()), 2);
+    EXPECT_EQ(b.SlotOf(ConvertUintToByteArray(16777216, 4).get()), 4);
+    EXPECT_EQ(b.SlotOf(ConvertUintToByteArray(33554432, 4).get()), 8);
+    EXPECT_EQ(b.SlotOf(ConvertUintToByteArray(67108864, 4).get()), 16);
+    EXPECT_EQ(b.SlotOf(ConvertUintToByteArray(134217728, 4).get()), 32);
+    EXPECT_EQ(b.SlotOf(ConvertUintToByteArray(268435456, 4).get()), 64);
+    EXPECT_EQ(b.SlotOf(ConvertUintToByteArray(536870912, 4).get()), 128);
+    EXPECT_EQ(b.SlotOf(ConvertUintToByteArray(1073741824, 4).get()), 256);
+    EXPECT_EQ(b.SlotOf(ConvertUintToByteArray(2147483648, 4).get()), 512);
+    EXPECT_EQ(b.SlotOf(ConvertUintToByteArray(2151677952, 4).get()), 513);
+    EXPECT_EQ(b.SlotOf(ConvertUintToByteArray(std::numeric_limits<uint32_t>::max(), 4).get()), 1024);
     EXPECT_NO_THROW(b.Close());
     EXPECT_NO_THROW(b.Destroy());
 }
@@ -50,6 +59,11 @@ TEST(BlobTest, AutoCapacityTest)
     EXPECT_NO_THROW(b.Destroy());
 }
 
+TEST(BlobTest, ReadWriteTest)
+{
+    Blob b("/tmp/testblobs/blob.bl", 3, 10, 0);
+    EXPECT_NO_THROW(b.Init());
+}
 }
 
 int main()
