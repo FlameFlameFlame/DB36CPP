@@ -42,8 +42,6 @@ namespace DB36_NS
             // convert convert key in byte form to key in uint64 form
             uint64_t ConvertByteKeyToUintKey(const Byte* key) const;
 
-            std::unique_ptr<Byte[]> ConvertUintKeyToByteKey(const uint64_t& key) const;
-
             bool CompareByteKeys(const Byte* key1, const Byte* key2) const;
         public:
             // constructor

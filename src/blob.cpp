@@ -166,11 +166,6 @@ uint64_t Blob::ConvertByteKeyToUintKey(const Byte* key) const
     return tempKey;
 }
 
-std::unique_ptr<Byte[]> Blob::ConvertUintKeyToByteKey(const uint64_t &key) const
-{
-    return std::unique_ptr<Byte[]>();
-}
-
 bool Blob::CompareByteKeys(const Byte *key1, const Byte *key2) const
 {
     for (int i = 0; i < blobKeyLength; ++i)
