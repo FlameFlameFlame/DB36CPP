@@ -14,7 +14,7 @@ if(NOT googletest_POPULATED)
 endif()
 
 add_executable(gtests gtests.cpp)
-target_link_libraries(gtests PRIVATE GTest::GTest  Boost::config Boost::multiprecision DB36CPP)
+target_link_libraries(gtests PRIVATE GTest::GTest DB36CPP)
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})

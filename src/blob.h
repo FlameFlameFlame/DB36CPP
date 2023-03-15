@@ -4,13 +4,11 @@
 #include <memory>
 #include <fstream>
 
-#include <boost/multiprecision/cpp_int.hpp>
 #include <gtest/gtest_prod.h>
 
 namespace DB36_NS
 {
 
-    using BigInt = boost::multiprecision::cpp_int;
     using Byte = uint8_t;
 
     class Blob 

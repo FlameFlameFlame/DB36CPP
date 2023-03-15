@@ -1,6 +1,7 @@
 #include "blob.h"
 
 #include <cmath>
+#include <cstring>
 #include <filesystem>
 #include <exception>
 #include <vector>
@@ -17,12 +18,12 @@ uint64_t Blob::GetKeyAddress(const Byte* key) const
     if (blobKeyLength > sizeof(uint64_t))
     {
         // copy last sizeof(uint64_t) bytes for key that is longer than uint64_t
-        memcpy(&retVal, key + (blobKeyLength - sizeof(uint64_t)), sizeof(uint64_t)); 
+        std::memcpy(&retVal, key + (blobKeyLength - sizeof(uint64_t)), sizeof(uint64_t)); 
     }
     else 
     {
         // fill the last blobKeyLength bytes in uint64_t if key is shorter that uint64_t
-        memcpy(&retVal, key, blobKeyLength);
+        std::memcpy(&retVal, key, blobKeyLength);
     }
     return isShrinked ? (retVal >> shift) * blobRecordLength : retVal >> shift;
 }
@@ -56,7 +57,7 @@ uint64_t Blob::GetKeyAddressInShrinkedBlob(const Byte* key) const
     do 
     {
         // read key in iterKey
-        memcpy (iterKey.get(), ReadBytesFromBlob(startAddress + iter * blobRecordLength, blobKeyLength).get(), blobKeyLength);
+        std::memcpy (iterKey.get(), ReadBytesFromBlob(startAddress + iter * blobRecordLength, blobKeyLength).get(), blobKeyLength);
         ++iter;
         if (startAddress + iter * blobRecordLength > blobCapacitySize)
             throw std::logic_error("record not found");
@@ -160,7 +161,7 @@ void Blob::Close()
 uint64_t Blob::ConvertByteKeyToUintKey(const Byte* key) const
 {
     uint64_t tempKey = 0;
-    memcpy(&tempKey, key, blobKeyLength < sizeof(uint64_t) ? blobKeyLength : sizeof(uint64_t));
+    std::memcpy(&tempKey, key, blobKeyLength < sizeof(uint64_t) ? blobKeyLength : sizeof(uint64_t));
     return tempKey;
 }
 

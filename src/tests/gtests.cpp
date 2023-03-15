@@ -2,6 +2,7 @@
 
 #include <gtest/gtest.h>
 
+#include <cstring>
 #include <limits>
 #include <random>
 
@@ -13,16 +14,16 @@ std::unique_ptr<Byte[]> ConvertUintKeyToByteArray(const uint64_t& key, const uns
     auto retVal = std::make_unique<Byte[]>(keyLength);
     const uint64_t zero = 0;
     // fill array with zeros
-    memcpy(retVal.get(), &zero, keyLength);
+    std::memcpy(retVal.get(), &zero, keyLength);
     if (sizeof(uint64_t) > keyLength)
     {
-        memcpy(retVal.get(), &key, keyLength);
+        std::memcpy(retVal.get(), &key, keyLength);
         return retVal;
     }
     else
     {
         // we'll lose some data here TBH
-        memcpy(retVal.get(), &key, sizeof(uint64_t));
+        std::memcpy(retVal.get(), &key, sizeof(uint64_t));
         return retVal;
     }
 }

@@ -10,20 +10,6 @@ set(BENCHMARK_DOWNLOAD_DEPENDENCIES ON)
 
 include (FetchContent)
 FetchContent_Declare(
-    Boost_MP
-    GIT_REPOSITORY https://github.com/boostorg/multiprecision.git
-    GIT_TAG boost-1.81.0
-)
-FetchContent_MakeAvailable(Boost_MP)
-
-FetchContent_Declare(
-    Boost_CONFIG
-    GIT_REPOSITORY https://github.com/boostorg/config.git
-    GIT_TAG boost-1.81.0
-)
-FetchContent_MakeAvailable(Boost_CONFIG)
-
-FetchContent_Declare(
     googletest
     GIT_REPOSITORY https://github.com/google/googletest.git
     GIT_TAG main
@@ -39,7 +25,7 @@ target_link_libraries(GTest::GTest INTERFACE gtest_main)
 enable_testing()
 
 add_library(DB36CPP src/blob.cpp)
-target_link_libraries(DB36CPP PRIVATE Boost::config Boost::multiprecision GTest::GTest) 
+target_link_libraries(DB36CPP PRIVATE GTest::GTest) 
 
 add_subdirectory(src/tests)
 
