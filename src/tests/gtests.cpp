@@ -28,7 +28,7 @@ std::unique_ptr<Byte[]> ConvertUintKeyToByteArray(const uint64_t& key, const uns
     }
 }
 
-void IOTest(const Byte* key, const Byte* data, const uint64_t& dataLen, Blob& b)
+void IOTest(Byte* key, Byte* data, const uint64_t& dataLen, Blob& b)
 {
     const auto keyLen = b.KeyLength();
     b.Set(key, data, dataLen);
@@ -89,7 +89,7 @@ TEST(BlobTest, IOTest)
 
 TEST(BlobTest, MillionRecords)
 {
-    Blob b("/tmp/testblobs/blob.bl", 4, 4, 20);
+    Blob b("/tmp/testblobs/blob.bl", 4, 4, 21);
     EXPECT_NO_THROW(b.Init());
 
     std::random_device dev;
