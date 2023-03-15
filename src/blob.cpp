@@ -18,14 +18,13 @@ uint64_t Blob::SlotOf(const Byte* key) const
     {
         // copy last sizeof(uint64_t) bytes for key that is longer than uint64_t
         memcpy(&retVal, key + (blobKeyLength - sizeof(uint64_t)), sizeof(uint64_t)); 
-        return retVal;
     }
     else 
     {
         // fill the last blobKeyLength bytes in uint64_t if key is shorter that uint64_t
-        memcpy(&retVal + (sizeof(uint64_t) - blobKeyLength), key, blobKeyLength);
-        return retVal;
+        memcpy(&retVal, key, blobKeyLength);
     }
+    return retVal >> shift;
 }
 
 std::unique_ptr<Byte[]> Blob::ReadBytesFromBlob(const uint64_t &address, const uint64_t &len) const
