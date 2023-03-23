@@ -16,5 +16,8 @@ endif()
 add_executable(gtests gtests.cpp)
 target_link_libraries(gtests PRIVATE GTest::GTest DB36CPP)
 
+add_executable(benchmark benchmark.cpp)
+target_link_libraries(benchmark PRIVATE DB36CPP)
+
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})

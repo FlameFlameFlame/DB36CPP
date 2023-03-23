@@ -25,7 +25,7 @@ target_link_libraries(GTest::GTest INTERFACE gtest_main)
 enable_testing()
 
 add_library(DB36CPP src/blob.cpp)
-target_link_libraries(DB36CPP PRIVATE GTest::GTest) 
+target_link_libraries(DB36CPP PUBLIC GTest::GTest) 
 
 add_subdirectory(src/tests)
 
