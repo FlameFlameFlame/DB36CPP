@@ -54,7 +54,7 @@ namespace DB36_NS
                 blobValueLength(valueLength),
                 blobCapacity(capacity)
                 {
-
+                    Init();
                 }
             Blob() = default;
             ~Blob() = default;

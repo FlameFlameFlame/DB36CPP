@@ -42,7 +42,6 @@ void IOTest(Byte* key, Byte* data, const uint64_t& dataLen, Blob& b)
 TEST(BlobTest, SlotOfTest)
 {
     Blob b("/tmp/testblobs/blob.bl", 4, 3, 10);
-    b.Init();
     const auto recLen = b.blobRecordLength;
     EXPECT_EQ(b.GetKeyAddress(ConvertUintKeyToByteArray(0, 4).get()), 0 * recLen);
     EXPECT_EQ(b.GetKeyAddress(ConvertUintKeyToByteArray(4194304, 4).get()), 1 * recLen);
@@ -64,7 +63,6 @@ TEST(BlobTest, SlotOfTest)
 TEST(BlobTest, AutoCapacityTest)
 {
     Blob b("/tmp/testblobs/blob.bl", 1, 2, 0);
-    EXPECT_NO_THROW(b.Init());
     EXPECT_EQ(b.blobCapacity, 0);
     EXPECT_EQ(b.CapacitySize(), 512);
     EXPECT_EQ(b.RecordsCount(), 256);
@@ -75,7 +73,6 @@ TEST(BlobTest, AutoCapacityTest)
 TEST(BlobTest, IOTest)
 {
     Blob b("/tmp/testblobs/blob.bl", 3, 3, 0);
-    EXPECT_NO_THROW(b.Init());
     std::unique_ptr<Byte[]>setValueBytes(new Byte[3] {254, 0, 254});
 
     const auto byteKey = ConvertUintKeyToByteArray(0, 3).get();
@@ -90,7 +87,6 @@ TEST(BlobTest, IOTest)
 TEST(BlobTest, MillionRecords)
 {
     Blob b("/tmp/testblobs/blob.bl", 4, 4, 21);
-    EXPECT_NO_THROW(b.Init());
 
     std::random_device dev;
     std::uniform_int_distribution<uint32_t> dist (0, std::numeric_limits<uint32_t>::max());
@@ -109,7 +105,6 @@ TEST(BlobTest, MillionRecords)
 TEST(BlobTest, Zeros)
 {
     Blob b("/tmp/testblobs/blob.bl", 4, 4, 0);
-    EXPECT_NO_THROW(b.Init());
     for (int i = 0; i < 100; ++i)
     {
         const auto key = ConvertUintKeyToByteArray(i, 2);
