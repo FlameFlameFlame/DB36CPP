@@ -44,37 +44,57 @@ public:
         return *this;
     }
 
+    union u64bytes
+    {
+        uint64_t number;
+        DB36_NS::Byte bytes[sizeof(uint64_t)];
+    };
 
     void GenerateRandomKey()
     {
         std::random_device dev;
-        std::uniform_int_distribution<DB36_NS::Byte> dist (0, std::numeric_limits<DB36_NS::Byte>::max());
+        std::uniform_int_distribution<uint64_t> dist (0, std::numeric_limits<uint64_t>::max());
+        u64bytes u;
         for (int i = 0; i < keyLength; ++i)
         {
-            key.get()[i] = dist(dev);
+            if (i % sizeof(u64bytes) == 0)
+            {
+                u = { dist(dev) };
+            }
+            key.get()[i] = u.bytes[i % sizeof(u64bytes)];
         }
     }
 
     void GenerateRandomValue()
     {
         std::random_device dev;
-        std::uniform_int_distribution<DB36_NS::Byte> dist (0, std::numeric_limits<DB36_NS::Byte>::max());
-        for (int i = 0; i < valueLength; ++i)
+        std::uniform_int_distribution<uint64_t> dist (0, std::numeric_limits<uint64_t>::max());
+        u64bytes u;
+        for (int i = 0; i < keyLength; ++i)
         {
-            value.get()[i] = dist(dev);
+            if (i % sizeof(u64bytes) == 0)
+            {
+                u = { dist(dev) };
+            }
+            value.get()[i] = u.bytes[i % sizeof(u64bytes)];
         }
     }
 
     void GenerateRandomKeyAndValue()
     {
         std::random_device dev;
-        std::uniform_int_distribution<DB36_NS::Byte> dist (0, std::numeric_limits<DB36_NS::Byte>::max());
+        std::uniform_int_distribution<uint64_t> dist (0, std::numeric_limits<uint64_t>::max());
+        u64bytes u;
         for (int i = 0; i < std::max(keyLength, valueLength); ++i)
         {
+            if (i % sizeof(u64bytes) == 0)
+            {
+                u = { dist(dev) };               
+            }
             if (i < keyLength)
-                key.get()[i] = dist(dev);
+                key.get()[i] = u.bytes[i % sizeof(u64bytes)];
             if (i < valueLength)
-                value.get()[i] = dist(dev);
+                value.get()[i] = u.bytes[i % sizeof(u64bytes)];
         }
     }
 
