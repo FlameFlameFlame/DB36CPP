@@ -57,8 +57,6 @@ TEST(BlobTest, SlotOfTest)
     EXPECT_EQ(b.GetKeyAddress(ConvertUintKeyToByteArray(2147483648, 4).get()), 512 * recLen);
     EXPECT_EQ(b.GetKeyAddress(ConvertUintKeyToByteArray(2151677952, 4).get()), 513 * recLen);
     EXPECT_EQ(b.GetKeyAddress(ConvertUintKeyToByteArray(std::numeric_limits<uint32_t>::max(), 4).get()), 1023 * recLen);
-    EXPECT_NO_THROW(b.Close());
-    EXPECT_NO_THROW(b.Destroy());
 }
 
 TEST(BlobTest, AutoCapacityTest)
@@ -68,8 +66,6 @@ TEST(BlobTest, AutoCapacityTest)
     EXPECT_EQ(b.blobCapacity, 0);
     EXPECT_EQ(b.CapacitySize(), 512);
     EXPECT_EQ(b.RecordsCount(), 256);
-    EXPECT_NO_THROW(b.Close());
-    EXPECT_NO_THROW(b.Destroy());
 }
 
 TEST(BlobTest, IOTest)
@@ -83,8 +79,6 @@ TEST(BlobTest, IOTest)
     const auto byteKey2 = ConvertUintKeyToByteArray(10, 3).get();
     IOTest(byteKey2, setValueBytes.get(), 3, b);
     
-    b.Close();
-    b.Destroy();
 }
 
 TEST(BlobTest, MillionRecords)
@@ -101,9 +95,6 @@ TEST(BlobTest, MillionRecords)
         const auto valueBytes = ConvertUintKeyToByteArray(keyInt - 1, 4);
         IOTest(keyBytes.get(), valueBytes.get(), 4, b);
     }
-
-    b.Close();
-    b.Destroy();
 }
 
 TEST(BlobTest, Zeros)
@@ -119,8 +110,6 @@ TEST(BlobTest, Zeros)
             EXPECT_EQ(data.get()[j], 0);
         }
     }
-    b.Close();
-    b.Destroy();
 }
 }
 

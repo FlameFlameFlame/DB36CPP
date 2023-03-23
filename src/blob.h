@@ -1,8 +1,13 @@
-#include <list>
+#include <cerrno>
 #include <cmath>
-#include <string>
+#include <cstring>
+#include <iostream>
 #include <memory>
-#include <fstream>
+#include <stdio.h>
+#include <string>
+
+#include <fcntl.h>
+#include <unistd.h>
 
 #include <gtest/gtest_prod.h>
 
@@ -24,7 +29,7 @@ namespace DB36_NS
             uint64_t blobRecordsCount;      // number of records is blob
 
             bool isShrinked = false;
-            mutable std::fstream file;
+            std::unique_ptr<FILE, decltype(&fclose)> file;
         protected:
             // calculate address for the shrinked blob
             uint64_t GetKeyAddress(const Byte* key) const;
@@ -52,11 +57,22 @@ namespace DB36_NS
                 blobPath(path),
                 blobKeyLength(keyLength),
                 blobValueLength(valueLength),
-                blobCapacity(capacity)
+                blobCapacity(capacity),
+                file(fopen(blobPath.c_str(), "w+"), &fclose)
                 {
+                    if (!file.get())
+                    {
 
+                        std::cerr << "File creation failed: " << std::strerror(errno) << '\n';
+                        throw(std::logic_error("Failed to initialize blob"));
+                    }
+                    posix_fallocate(fileno(file.get()), 0, blobCapacitySize);
                 }
-            Blob() = default;
+            Blob() = delete;
+            Blob(const Blob&) = delete;
+            Blob& operator= (const Blob&) = delete;
+            Blob(Blob&&) = default;
+            Blob& operator= (Blob&&) = default;
             ~Blob() = default;
             // write value associated with the key
             void Set(Byte* key, Byte* value, const uint64_t& valueLen);
@@ -80,9 +96,6 @@ namespace DB36_NS
                 return blobValueLength;
             }
             void Init();
-            void Destroy();
-            void Close();
-
         private:
             FRIEND_TEST(BlobTest, SlotOfTest);
             FRIEND_TEST(BlobTest, AutoCapacityTest);

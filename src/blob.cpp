@@ -6,9 +6,6 @@
 #include <exception>
 #include <vector>
 
-#include <fcntl.h>
-#include <unistd.h>
-
 namespace DB36_NS
 {
 
@@ -30,16 +27,14 @@ uint64_t Blob::GetKeyAddress(const Byte* key) const
 
 std::unique_ptr<Byte[]> Blob::ReadBytesFromBlob(const uint64_t &address, const uint64_t &len) const
 {
-    std::unique_ptr<Byte[]> returnArray = std::make_unique<Byte[]>(len); 
-    file.seekg(address, std::ios_base::beg);
-    file.read(reinterpret_cast<char*>(returnArray.get()), len);
+    auto returnArray = std::make_unique<Byte[]>(len);
+    pread(fileno(file.get()), returnArray.get(), len, address);
     return returnArray;
 }
 
 uint64_t Blob::WriteBytesToBlob(const uint64_t &address, Byte* data, const uint64_t &len)
 {
-    file.seekg(address, std::ios_base::beg);
-    file.write(reinterpret_cast<char*>(data), len);
+    pwrite(fileno(file.get()), data, len, address);
     return address + len;
 }
 
@@ -123,47 +118,6 @@ void Blob::Init()
         isShrinked = true;
     }
     blobCapacitySize = blobRecordLength * blobRecordsCount;
-    if (file.is_open())
-        throw(std::logic_error("Blob is already initialized"));
-
-   CreateBlobFile();
-}
-
-void Blob::CreateBlobFile()
-{
-    const auto fsPath = std::filesystem::path(blobPath);
-    const auto dir = fsPath.parent_path().string();
-
-    std::filesystem::create_directory(dir);
-    if (!std::filesystem::exists(dir))
-        throw(std::logic_error("Failed to initialize directory"));
-
-    // open in C-style to call posix_fallocate
-    FILE* fileDescriptor = std::fopen(blobPath.c_str(), "w+");
-    if (!fileDescriptor)
-        throw(std::logic_error("Failed to initialize blob"));
-    posix_fallocate(fileno(fileDescriptor), 0, blobCapacitySize);
-    std::fclose(fileDescriptor);
-
-    // now open in C++ style
-    file.open(blobPath, file.in | file.out | file.binary);
-    if (!file.is_open())
-        throw(std::logic_error("Failed to initialize blob"));
-
-    if (std::filesystem::file_size(blobPath) != blobCapacitySize)
-        throw(std::logic_error("Wrong size"));
-
-}
-
-void Blob::Destroy()
-{
-    if (file.is_open())
-        throw(std::logic_error("Tried to destroy opened file"));
-    std::filesystem::remove(blobPath);
-}
-void Blob::Close()
-{
-    file.close();
 }
 
 uint64_t Blob::ConvertByteKeyToUintKey(const Byte* key) const
