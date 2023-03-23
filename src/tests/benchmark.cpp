@@ -148,16 +148,16 @@ bool IOTest(DB36_NS::Byte* key, DB36_NS::Byte* data, const uint64_t& dataLen, DB
     return true;
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     using namespace DB36_NS;
     using namespace std::chrono;
     using namespace std::chrono_literals;
 
-    const int keyLength = 32;
-    const int valueLength = 64;
-    const int capacity = 21;
-    const int vectorLength = 1000000;
+    const int keyLength = std::stoi(argv[2]);
+    const int valueLength = std::stoi(argv[3]);
+    const int capacity = std::stoi(argv[1]);
+    const int vectorLength = std::stoi(argv[4]);
 
     std::cout << "Generating large random vector, it might take a while" << std::endl;
     const auto largeVector = generateRandomKeyValuesVector(vectorLength, keyLength, valueLength);
