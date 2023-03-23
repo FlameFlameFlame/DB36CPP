@@ -67,6 +67,7 @@ namespace DB36_NS
                         throw(std::logic_error("Failed to initialize blob"));
                     }
                     posix_fallocate(fileno(file.get()), 0, blobCapacitySize);
+                    Init();
                 }
             Blob() = delete;
             Blob(const Blob&) = delete;
