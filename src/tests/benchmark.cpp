@@ -119,33 +119,133 @@ public:
     }
 };
 
-std::vector<KeyValuePair> generateRandomKeyValuesVector(const int& vectorLength, const int& keyLength, const int& valueLength)
+bool CompareByteArrays(DB36_NS::Byte* value1, DB36_NS::Byte* value2, const int& valueLength)
+{
+    for (int i = 0; i < valueLength; ++i)
+        if (value1[i] != value2[i])
+            return false;
+    
+    return true;
+}
+
+std::vector<KeyValuePair> GenerateRandomKeyValuesVector(const int& vectorLength, const int& keyLength, const int& valueLength)
 {
     int i = 0;
-    std::vector<KeyValuePair> resultVector(vectorLength); // , std::move(KeyValuePair(keyLength, valueLength)));
+    std::vector<KeyValuePair> resultVector(vectorLength);
+    using KeyType = std::unique_ptr<DB36_NS::Byte[]>;
+
+    std::vector<KeyType> usedKeys;
     for (auto& keyValue : resultVector)
     {
         KeyValuePair tempKey(keyLength, valueLength);
-        tempKey.GenerateRandomKeyAndValue();
+        tempKey.GenerateRandomValue();
+        tempKey.GenerateRandomKey();
+        
         keyValue = std::move(tempKey);
         ++i;
         if (i >= 100000 && i % 100000 == 0)
-            std::cout << "Generated " << i << " random values" << std::endl;
+            std::cout << "Generated " << i << " random key and value" << std::endl;
     }
     return resultVector;
 }
 
-bool IOTest(DB36_NS::Byte* key, DB36_NS::Byte* data, const uint64_t& dataLen, DB36_NS::Blob& b)
+
+void FindAndReplaceAllNonUniqueKeysInVector(std::vector<KeyValuePair>& v)
 {
-    const auto keyLen = b.KeyLength();
-    b.Set(key, data, dataLen);
-    const auto getValue = b.Get(key);
-    for (int i = 0; i < dataLen; ++i)
+    if (v.empty())
+        throw std::logic_error("Empty vector");
+
+    std::cout << "Looking for duplicate keys" << std::endl;
+    using KeyType = std::unique_ptr<DB36_NS::Byte[]>;
+    std::vector<KeyType> alreadyUsedKeys;
+    
+    bool iteratedThroughAllVector = false;
+    const auto keyLength = v[0].GetKeyLength();
+    int iteration = 0;
+    while (!iteratedThroughAllVector)
     {
-        if (data[i] != getValue.get()[i])
-            return false;
+        std::cout << "Starting iteration " << iteration << std::endl;
+        bool startNewIteration = false;
+        for (auto kvIter = v.begin(); kvIter != v.end(); std::advance(kvIter, 1))
+        {
+            for (const auto& key : alreadyUsedKeys)
+            {
+                auto& kv = *kvIter;
+                if (CompareByteArrays(key.get(), kv.GetKey(), keyLength))
+                {
+                    KeyType goodKey = std::make_unique<DB36_NS::Byte[]>(keyLength);
+                    memcpy(goodKey.get(), kv.GetKey(), keyLength);
+                    alreadyUsedKeys.emplace_back(std::move(goodKey));
+                }
+                else
+                {
+                    std::cout << "Found duplicate key" << std::endl;
+                    kv.GenerateRandomKey();
+                    std::cout << "Generated new random key" << std::endl;
+                    startNewIteration = true;
+                    break;
+                }
+            }
+            if(startNewIteration)
+                break;
+
+            if (kvIter == (v.end() - 1))
+                iteratedThroughAllVector = true;
+
+            if (std::distance(kvIter, v.begin()) > 100000 && std::distance(kvIter, v.begin()) % 100000)
+            {
+                std::cout << "Checked " << std::distance(kvIter, v.begin()) << " keys" << std::endl;
+            }
+        }
     }
-    return true;
+}
+
+// returns vector of time in microseconds
+std::vector<unsigned long long> WriteVectorToBlob (std::vector<KeyValuePair>& v, DB36_NS::Blob& blob)
+{
+    using namespace std::chrono;
+    using namespace std::chrono_literals;
+
+    if (v.size() == 0)
+        return {};
+
+    if (blob.KeyLength() != v[0].GetKeyLength())
+        throw std::logic_error ("Key length in input vector and blob are not equal");
+
+    FindAndReplaceAllNonUniqueKeysInVector(v);
+
+    std::vector<unsigned long long> writeTimesStartMicroseconds;
+    for (const auto& kv : v)
+    {
+        const auto writeTimeStart = system_clock::now();
+        blob.Set(kv.GetKey(), kv.GetValue(), kv.GetValueLength());
+        writeTimesStartMicroseconds.push_back(duration_cast<microseconds>(system_clock::now() - writeTimeStart).count());
+    }
+    return writeTimesStartMicroseconds;
+}
+
+std::vector<unsigned long long> ReadFromBlobAndCheckKeyValuePairs(const std::vector<KeyValuePair>& v, const DB36_NS::Blob& blob)
+{
+    using namespace std::chrono;
+    using namespace std::chrono_literals;
+
+    if (v.size() == 0)
+        return {};
+
+    if (blob.KeyLength() != v[0].GetKeyLength())
+        throw std::logic_error ("Key length in input vector and blob are not equal");
+
+    std::vector<unsigned long long> readTimesStartMicroseconds;
+    for (const auto& kv : v)
+    {
+        const auto readTimeStart = system_clock::now();
+        const auto data = blob.Get(kv.GetKey());
+        readTimesStartMicroseconds.push_back(duration_cast<microseconds>(system_clock::now() - readTimeStart).count());
+
+        if (!CompareByteArrays(data.get(), kv.GetValue(), kv.GetValueLength()))
+            throw std::logic_error("KV pair doesn't equal to data");
+    }
+    return readTimesStartMicroseconds;
 }
 
 int main(int argc, char *argv[])
@@ -160,7 +260,9 @@ int main(int argc, char *argv[])
     const int vectorLength = std::stoi(argv[4]);
 
     std::cout << "Generating large random vector, it might take a while" << std::endl;
-    const auto largeVector = generateRandomKeyValuesVector(vectorLength, keyLength, valueLength);
+    auto largeVector = GenerateRandomKeyValuesVector(vectorLength, keyLength, valueLength);
+    std::cout << "Making sure there are no duplicate keys" << std::endl;
+    FindAndReplaceAllNonUniqueKeysInVector(largeVector);
 
     Blob b ("/tmp/testblobs/blob.bl", keyLength, valueLength, capacity);
 
@@ -170,21 +272,17 @@ int main(int argc, char *argv[])
     std::cout << "vectorLength\t" << vectorLength << std::endl;
     std::cout << "Test started" << std::endl;
 
-    const auto testStartTime = system_clock::now();
-    std::vector<unsigned long long> durationMicrosendsVector;
-    for (auto kv = largeVector.begin(); kv != largeVector.end(); std::advance(kv, 1))
-    {
-        const auto IOStartTime = system_clock::now();
-        if (!IOTest(kv->GetKey(), kv->GetValue(), kv->GetValueLength(), b))
-            throw (std::logic_error("Key-value pair doesn't match with set values"));
-        durationMicrosendsVector.emplace_back(duration_cast<microseconds>(system_clock::now() - IOStartTime).count());
-    }
-    const auto testDurationMilliseconds = duration_cast<milliseconds>(system_clock::now() - testStartTime).count();
+    const auto writeTimesMicrosendsVector = WriteVectorToBlob(largeVector, b);
+    const auto readTimesMicrosendsVector = ReadFromBlobAndCheckKeyValuePairs(largeVector, b);
+   
     std::cout << "Test finished" << std::endl;
-    std::cout << "duration\t" << testDurationMilliseconds << "ms\n";
-    std::cout << "average IO\t" << double(std::accumulate(durationMicrosendsVector.begin(), durationMicrosendsVector.end(), 0)/durationMicrosendsVector.size())/1000 << "ms\n";
-    std::cout << "maximal IO\t" << double(*std::max_element(durationMicrosendsVector.begin(), durationMicrosendsVector.end()))/1000 << "ms\n";
-    std::cout << "minimal IO\t" << double(*std::min_element(durationMicrosendsVector.begin(), durationMicrosendsVector.end()))/1000 << "ms\n";
+    std::cout << "duration\t" << std::accumulate(writeTimesMicrosendsVector.begin(), writeTimesMicrosendsVector.end(), std::accumulate(readTimesMicrosendsVector.begin(), readTimesMicrosendsVector.end(), 0))/1000 << "ms\n";
+    std::cout << "average write\t" << double(std::accumulate(writeTimesMicrosendsVector.begin(), writeTimesMicrosendsVector.end(), 0)/writeTimesMicrosendsVector.size())/1000 << "ms\n";
+    std::cout << "maximal write\t" << double(*std::max_element(writeTimesMicrosendsVector.begin(), writeTimesMicrosendsVector.end()))/1000 << "ms\n";
+    std::cout << "minimal write\t" << double(*std::min_element(writeTimesMicrosendsVector.begin(), writeTimesMicrosendsVector.end()))/1000 << "ms\n";
+    std::cout << "average read\t" << double(std::accumulate(readTimesMicrosendsVector.begin(), readTimesMicrosendsVector.end(), 0)/readTimesMicrosendsVector.size())/1000 << "ms\n";
+    std::cout << "maximal read\t" << double(*std::max_element(readTimesMicrosendsVector.begin(), readTimesMicrosendsVector.end()))/1000 << "ms\n";
+    std::cout << "minimal read\t" << double(*std::min_element(readTimesMicrosendsVector.begin(), readTimesMicrosendsVector.end()))/1000 << "ms\n";
 
     return 0;
 }
