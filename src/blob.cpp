@@ -82,8 +82,10 @@ void Blob::Set(Byte* key, Byte* value, const uint64_t& valueLen)
     }
     // if we're here, then blob is shrinked
     const auto address = SetKeyAddressInShrinkedBlob(key);
-    WriteBytesToBlob(address, key, blobKeyLength);
-    WriteBytesToBlob(address + blobKeyLength, value, valueLen);
+    const auto data = std::make_unique<Byte[]>(blobKeyLength + valueLen);
+    memcpy(data.get(), key, blobKeyLength);
+    memcpy(&data.get()[blobKeyLength], value, valueLen);
+    WriteBytesToBlob(address, data.get(), blobKeyLength + valueLen);
 }
 
 
